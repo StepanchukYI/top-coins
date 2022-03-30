@@ -1,10 +1,7 @@
 package utilhttp
 
 import (
-	"context"
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/StepanchukYI/top-coin/internal/services"
 	// services "github.com/StepanchukYI/top-coin/internal/services"
@@ -12,22 +9,15 @@ import (
 
 func (server *Server) Hello(s *services.ApiService) HandlerDesc {
 	h := func(w http.ResponseWriter, r *http.Request) {
-		out := make(chan interface{})
-		ctx, cancel := context.WithCancel(r.Context())
-		defer cancel()
+		ctx := r.Context()
 
-		for {
-			v, err := s.Hello(ctx)
-			if err != nil {
-				cancel()
-			}
-			select {
-			case <-ctx.Done():
-				fmt.Fprint(os.Stderr, "request cancelled\n")
-			case out <- v:
-				server.createSuccessResponse(w, http.StatusOK, <-out)
-			}
+		v, err := s.Hello(ctx)
+		if err != nil {
+			server.createErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+			return
 		}
+
+		server.createSuccessResponse(w, http.StatusOK, v)
 
 	}
 

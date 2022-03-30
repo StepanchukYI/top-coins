@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -26,8 +27,10 @@ func NewApiService() *ApiService {
 	return &ApiService{}
 }
 
-func (a *ApiService) Hello(ctx context.Context) (res context.Context, err error) {
-	time.Sleep(10 * time.Second)
+func (a *ApiService) Hello(ctx context.Context) (interface{}, error) {
+
+	fmt.Println("1")
+	time.Sleep(5 * time.Second)
 
 	return ctx, nil
 }
