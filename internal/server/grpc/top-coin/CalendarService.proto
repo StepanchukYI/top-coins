@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package main;
+
+option go_package = "github.com/StepanchukYI/top-coins/internal/server/grpc/top-coin";
+
+import "google/protobuf/empty.proto";
+
+
+message LoginRequest {
+    string email = 1;
+
+    string password = 2;
+}
+
+message LoginResponse {
+    string email = 1;
+
+    string password = 2;
+}
+
+service CalendarService {
+    rpc LoginUser ( LoginRequest ) returns ( LoginResponse );
+}
+
+    

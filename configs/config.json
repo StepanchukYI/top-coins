@@ -1,0 +1,6 @@
+{
+    "CoinmarketcapApikey": "7c469a43-02bb-462c-b21f-80afd4672fe1",
+    "CryptocompareApikey": "4f9ed87037f2718b14ae2360317d3b64f5579e73fc5efcfefb9f8f091aa877e9",
+    "LogLevel" : "debug",
+    "BindAddr" : "localhost:8000"
+}
