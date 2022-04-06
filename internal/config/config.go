@@ -7,9 +7,13 @@ import (
 
 // Application holds application configuration values
 type Config struct {
-	BindAddr    string
-	DatabaseDSN string
-	LogLevel    string
+	BindAddr            string
+	LogLevel            string
+	CoinmarketcapApiKey string
+	CoinmarketcapApiUrl string
+	CryptocompareApiKey string
+	CryptocompareApiUrl string
+	Currency string
 }
 
 func NewConfig(file string) (cfg *Config, err error) {

@@ -20,7 +20,7 @@ Rank,	Symbol,	Price USD,
 2,	ETH,	370.237,
 3,	XRP,	0.471636,
 ...	...	...
-200,	DCN,	0.000269788,
+100,	DCN,	0.000269788,
 ```
 
 The ranking and price information should always be up-to-date. For example let's say that Wings ranking changes from #199 to #200, the list should reflect that change.
@@ -30,7 +30,7 @@ The ranking and price information should always be up-to-date. For example let's
 To make the challenge a bit more interesting, we ask you to:
 
 * Use [coinmarketcap API](https://coinmarketcap.com/api/) to get the current USD prices
-* Use [cryptocompare API](https://www.cryptocompare.com/api#-api-data-coinlist-) to get the current ranking information for the top 200 assets.
+* Use [cryptocompare API](https://www.cryptocompare.com/api#-api-data-coinlist-) to get the current ranking information for the top 100 assets.
 
 We know that you can get all the necessary data from either one of those but part of this challenge is to see how you deal with the problem of merging information from multiple data sources.
 

@@ -1,6 +1,9 @@
 {
-    "CoinmarketcapApikey": "7c469a43-02bb-462c-b21f-80afd4672fe1",
-    "CryptocompareApikey": "4f9ed87037f2718b14ae2360317d3b64f5579e73fc5efcfefb9f8f091aa877e9",
+    "CoinmarketcapApiKey": "7c469a43-02bb-462c-b21f-80afd4672fe1",
+    "CoinmarketcapApiUrl": "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+    "CryptocompareApiKey": "4f9ed87037f2718b14ae2360317d3b64f5579e73fc5efcfefb9f8f091aa877e9",
+    "CryptocompareApiUrl": "https://min-api.cryptocompare.com/data/top/totalvolfull",
+    "Currency": "USD",
     "LogLevel" : "debug",
     "BindAddr" : "localhost:8000"
 }

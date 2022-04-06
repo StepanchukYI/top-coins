@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,20 +59,6 @@ func (s *Server) setRequestID(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) cancelRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		rw := &responseWriter{w, http.StatusOK}
-		next.ServeHTTP(rw, r)
-
-		select {
-		case <-ctx.Done():
-			fmt.Fprintf(os.Stderr, "request cancelled")
-		}
-	})
-}
-
 func (s *Server) RegisterRouter(rank_service *services.RankService,
 	price_service *services.PriceService,
 	api_service *services.ApiService) {
@@ -84,7 +69,6 @@ func (s *Server) RegisterRouter(rank_service *services.RankService,
 
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-	s.router.Use(s.cancelRequest)
 	for _, handler := range handlers {
 		s.router.Handle(handler.Path, handler.Handler).Methods(handler.Method)
 	}
