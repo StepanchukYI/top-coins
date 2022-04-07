@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"sync"
 
 	"github.com/StepanchukYI/top-coin/internal/config"
 	"github.com/StepanchukYI/top-coin/internal/models"
@@ -27,9 +26,8 @@ func NewRankProvider(config *config.Config) *RankProvider {
 	}
 }
 
-func (p *RankProvider) GetRank(limit int, page int, wg *sync.WaitGroup) ([]models.Crypto, error) {
+func (p *RankProvider) GetRank(limit int, page int) ([]models.Crypto, error) {
 	client := &http.Client{}
-	defer wg.Done()
 
 	req, err := http.NewRequest("GET", p.Url, nil)
 	if err != nil {

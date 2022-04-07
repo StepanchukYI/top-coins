@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,9 +25,8 @@ func NewRankService(rank *provider.RankProvider) *RankService {
 }
 
 func (s *RankService) Rank(ctx context.Context) ([]models.Crypto, server.ErrorResponse) {
-	defaultLimit := 20
 	maxLimit := 100
-	limit := defaultLimit
+	limit := maxLimit
 	err := errors.New("")
 
 	limitVal := ctx.Value("limit")
@@ -57,24 +57,24 @@ func (s *RankService) Rank(ctx context.Context) ([]models.Crypto, server.ErrorRe
 			limitRequesrs = append(limitRequesrs, maxLimit)
 			break
 		}
+		if currentLimit == 0 {
+			break
+		}
 	}
 
-	wg := &sync.WaitGroup{}
 	responseModels := []models.Crypto{}
+	errorsChan := make(chan server.ErrorResponse)
 
 	for page, limit := range limitRequesrs {
-		wg.Add(1)
-		data, err := s.RankProvider.GetRank(limit, page, wg)
+		data, err := s.RankProvider.GetRank(limit, page)
 		if err != nil {
-			return nil, server.ErrorResponse{
+			errorsChan <- server.ErrorResponse{
 				Code:   http.StatusInternalServerError,
 				Errors: []string{err.Error()},
 			}
 		}
 		responseModels = append(responseModels, data...)
 	}
-
-	wg.Wait()
 
 	return responseModels, server.ErrorResponse{}
 }
@@ -102,9 +102,8 @@ func NewApiService(rank *provider.RankProvider, price *provider.PriceProvider) *
 }
 
 func (a *ApiService) Currency(ctx context.Context) ([]models.Crypto, server.ErrorResponse) {
-	defaultLimit := 20
 	maxLimit := 100
-	limit := defaultLimit
+	limit := maxLimit
 	err := errors.New("")
 
 	limitVal := ctx.Value("limit")
@@ -137,21 +136,34 @@ func (a *ApiService) Currency(ctx context.Context) ([]models.Crypto, server.Erro
 		}
 	}
 
-	wg := &sync.WaitGroup{}
+	var wg sync.WaitGroup
+
 	responseModels := []models.Crypto{}
+	responseChan := make(chan []models.Crypto)
+	errorsChan := make(chan server.ErrorResponse)
 
 	for page, limit := range limitRequesrs {
 		wg.Add(1)
-		data, err := a.RankProvider.GetRank(limit, page, wg)
-		if err != nil {
-			return nil, server.ErrorResponse{
-				Code:   http.StatusInternalServerError,
-				Errors: []string{err.Error()},
+		go func() {
+			defer wg.Done()
+			data, err := a.RankProvider.GetRank(limit, page)
+			if err != nil {
+				errorsChan <- server.ErrorResponse{
+					Code:   http.StatusInternalServerError,
+					Errors: []string{err.Error()},
+				}
 			}
-		}
+			fmt.Println("Request Done")
+			responseChan <- data
+		}()
+	}
+	fmt.Println("Wait")
+	wg.Wait()
+	fmt.Println("Wait ended")
+
+	for data := range responseChan {
 		responseModels = append(responseModels, data...)
 	}
-	wg.Wait()
 
 	currencyKeys := []string{}
 
