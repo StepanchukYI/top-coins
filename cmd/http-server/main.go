@@ -30,20 +30,6 @@ func main() {
 	rank := provider.NewRankProvider(config)
 	price := provider.NewPriceProvider(config)
 
-	// data, err := rank.GetRank(2)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Printf("%+v", data)
-
-	// data, err := price.GetPrice("BTC,ETH")
-	// if err != nil {
-	// log.Fatal(err)
-	// }
-
-	// fmt.Printf("%+v", data)
-
 	App, err := app.NewApplication(config)
 	if err != nil {
 		log.Fatal(err)
@@ -63,6 +49,6 @@ func main() {
 
 	err = App.StartServer()
 	if err != nil {
-	log.Fatal(err)
+		log.Fatal(err)
 	}
 }
