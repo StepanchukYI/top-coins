@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/StepanchukYI/top-coin/internal/app"
+	"github.com/StepanchukYI/top-coin/internal/server"
 	services "github.com/StepanchukYI/top-coin/internal/services"
 )
 
@@ -64,7 +65,8 @@ func (s *Server) RegisterRouter(rank_service *services.RankService,
 	api_service *services.ApiService) {
 
 	handlers := []HandlerDesc{
-		s.Hello(api_service),
+		s.GetCurrency(api_service),
+		s.GetRank(rank_service),
 	}
 
 	s.router.Use(s.setRequestID)
@@ -122,21 +124,14 @@ func (s *Server) Start() error {
 	return nil
 }
 
-type ErrorResponse struct {
-	Code   int      `json:"code"`
-	Errors []string `json:"errors"`
-}
-
-func (s *Server) createErrorResponse(w http.ResponseWriter, code int, errors []string) {
-	//debug.PrintStack()
-	response := ErrorResponse{Code: code, Errors: errors}
+func (s *Server) createErrorResponse(w http.ResponseWriter, response server.ErrorResponse) {
 	responseJson, err := json.Marshal(response)
 	if err != nil {
 		panic(err)
 	}
 
 	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(response.Code)
 	w.Write(responseJson)
 }
 

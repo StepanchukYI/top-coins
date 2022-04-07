@@ -3,13 +3,14 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math/rand"
+	"net/http"
+	"strconv"
 	"strings"
-	"time"
+	"sync"
 
 	"github.com/StepanchukYI/top-coin/internal/models"
 	"github.com/StepanchukYI/top-coin/internal/provider"
+	"github.com/StepanchukYI/top-coin/internal/server"
 )
 
 type RankService struct {
@@ -22,26 +23,60 @@ func NewRankService(rank *provider.RankProvider) *RankService {
 	}
 }
 
-func (s *RankService) Rank(ctx context.Context) ([]models.Crypto, error) {
+func (s *RankService) Rank(ctx context.Context) ([]models.Crypto, server.ErrorResponse) {
 	defaultLimit := 20
 	maxLimit := 100
 	limit := defaultLimit
+	err := errors.New("")
 
 	limitVal := ctx.Value("limit")
-
 	if limitVal != nil {
-		limit = limitVal.(int)
-	}
-	if limit > maxLimit {
-		return nil, errors.New("Limit must be lowest than " + string(maxLimit))
-	}
-	
-	data, err := s.RankProvider.GetRank(limit)
-	if err != nil {
-		return nil, err
+		limit, err = strconv.Atoi(limitVal.(string))
+		if err != nil {
+			return nil, server.ErrorResponse{
+				Code:   http.StatusInternalServerError,
+				Errors: []string{err.Error()},
+			}
+		}
 	}
 
-	return data, nil
+	if limit%maxLimit != 0 {
+		return nil, server.ErrorResponse{
+			Code:   http.StatusInternalServerError,
+			Errors: []string{"Limit must equal 100"},
+		}
+	}
+
+	limitRequesrs := []int{}
+
+	currentLimit := limit
+	for {
+		currentLimit -= maxLimit
+		limitRequesrs = append(limitRequesrs, maxLimit)
+		if currentLimit == maxLimit {
+			limitRequesrs = append(limitRequesrs, maxLimit)
+			break
+		}
+	}
+
+	wg := &sync.WaitGroup{}
+	responseModels := []models.Crypto{}
+
+	for page, limit := range limitRequesrs {
+		wg.Add(1)
+		data, err := s.RankProvider.GetRank(limit, page, wg)
+		if err != nil {
+			return nil, server.ErrorResponse{
+				Code:   http.StatusInternalServerError,
+				Errors: []string{err.Error()},
+			}
+		}
+		responseModels = append(responseModels, data...)
+	}
+
+	wg.Wait()
+
+	return responseModels, server.ErrorResponse{}
 }
 
 type PriceService struct {
@@ -66,60 +101,90 @@ func NewApiService(rank *provider.RankProvider, price *provider.PriceProvider) *
 	}
 }
 
-func (a *ApiService) Currency(ctx context.Context) ([]models.Crypto, error) {
+func (a *ApiService) Currency(ctx context.Context) ([]models.Crypto, server.ErrorResponse) {
 	defaultLimit := 20
 	maxLimit := 100
 	limit := defaultLimit
+	err := errors.New("")
 
 	limitVal := ctx.Value("limit")
-
 	if limitVal != nil {
-		limit = limitVal.(int)
-	}
-	if limit > maxLimit {
-		return nil, errors.New("Limit must be lowest than " + string(maxLimit))
+		limit, err = strconv.Atoi(limitVal.(string))
+		if err != nil {
+			return nil, server.ErrorResponse{
+				Code:   http.StatusInternalServerError,
+				Errors: []string{err.Error()},
+			}
+		}
 	}
 
-	cryptos, err := a.RankProvider.GetRank(limit)
-	if err != nil {
-		return nil, err
+	if limit%maxLimit != 0 {
+		return nil, server.ErrorResponse{
+			Code:   http.StatusInternalServerError,
+			Errors: []string{"Limit must equal 100"},
+		}
 	}
+
+	limitRequesrs := []int{}
+
+	currentLimit := limit
+	for {
+		currentLimit -= maxLimit
+		limitRequesrs = append(limitRequesrs, maxLimit)
+		if currentLimit == maxLimit {
+			limitRequesrs = append(limitRequesrs, maxLimit)
+			break
+		}
+	}
+
+	wg := &sync.WaitGroup{}
+	responseModels := []models.Crypto{}
+
+	for page, limit := range limitRequesrs {
+		wg.Add(1)
+		data, err := a.RankProvider.GetRank(limit, page, wg)
+		if err != nil {
+			return nil, server.ErrorResponse{
+				Code:   http.StatusInternalServerError,
+				Errors: []string{err.Error()},
+			}
+		}
+		responseModels = append(responseModels, data...)
+	}
+	wg.Wait()
 
 	currencyKeys := []string{}
 
-	for _, crypto := range cryptos {
+	for _, crypto := range responseModels {
 		currencyKeys = append(currencyKeys, crypto.Symbol)
 	}
 
 	prices, err := a.PriceProvider.GetPrice(strings.Join(currencyKeys, ","))
 
 	if err != nil {
-		return nil, err
+		return nil, server.ErrorResponse{
+			Code:   http.StatusInternalServerError,
+			Errors: []string{err.Error()},
+		}
 	}
 
-	for _, crypto := range cryptos {
+	for key, crypto := range responseModels {
 		cryptoPrice, ok := prices[crypto.Symbol]
 		if !ok {
-
+			return nil, server.ErrorResponse{
+				Code:   http.StatusBadRequest,
+				Errors: []string{"API ERROR"},
+			}
 		}
-		crypto.Price = cryptoPrice
+		err = crypto.SetPrice(cryptoPrice)
+		if err != nil {
+			return nil, server.ErrorResponse{
+				Code:   http.StatusInternalServerError,
+				Errors: []string{err.Error()},
+			}
+		}
+		responseModels[key] = crypto
 	}
 
-	return cryptos, nil
-}
-
-func (a *ApiService) Hello(ctx context.Context) (interface{}, error) {
-
-	time.Sleep(5 * time.Second)
-
-	random := rand.Intn(5)
-
-	fmt.Println(random)
-
-	if random == 1 {
-		return ctx, nil
-	} else {
-		return ctx, errors.New("Error")
-	}
-
+	return responseModels, server.ErrorResponse{}
 }

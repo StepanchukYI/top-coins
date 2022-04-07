@@ -3,6 +3,7 @@ package provider
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -27,12 +28,12 @@ func NewPriceProvider(config *config.Config) *PriceProvider {
 func (p *PriceProvider) GetPrice(crypto string) (map[string]float64, error) {
 	client := &http.Client{}
 
-	//https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest
 	req, err := http.NewRequest("GET", p.Url, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println(crypto)
 	q := url.Values{}
 	q.Add("symbol", crypto)
 	q.Add("aux", "is_active")
@@ -47,7 +48,9 @@ func (p *PriceProvider) GetPrice(crypto string) (map[string]float64, error) {
 		return nil, errors.New("Error sending request to server")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("Error receiving request to server")
+		fmt.Printf("%+v\n", resp)
+		fmt.Printf("%+v\n", resp.Body)
+		return nil, errors.New("Error receiving request to server from Price Data Provider")
 	}
 	respBody, _ := ioutil.ReadAll(resp.Body)
 

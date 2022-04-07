@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 
 	"github.com/StepanchukYI/top-coin/internal/config"
 	"github.com/StepanchukYI/top-coin/internal/models"
@@ -26,8 +27,9 @@ func NewRankProvider(config *config.Config) *RankProvider {
 	}
 }
 
-func (p *RankProvider) GetRank(limit int) ([]models.Crypto, error) {
+func (p *RankProvider) GetRank(limit int, page int, wg *sync.WaitGroup) ([]models.Crypto, error) {
 	client := &http.Client{}
+	defer wg.Done()
 
 	req, err := http.NewRequest("GET", p.Url, nil)
 	if err != nil {
@@ -35,7 +37,7 @@ func (p *RankProvider) GetRank(limit int) ([]models.Crypto, error) {
 	}
 
 	q := url.Values{}
-	q.Add("start", "1")
+	q.Add("page", strconv.Itoa(page))
 	q.Add("limit", strconv.Itoa(limit))
 	q.Add("tsym", p.Currency)
 
@@ -47,9 +49,8 @@ func (p *RankProvider) GetRank(limit int) ([]models.Crypto, error) {
 	if err != nil {
 		return nil, errors.New("Error sending request to server")
 	}
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("Error receiving request to server")
+		return nil, errors.New("Error receiving request to server from Rank Data Provider")
 	}
 	respBody, _ := ioutil.ReadAll(resp.Body)
 
@@ -68,7 +69,7 @@ func (p *RankProvider) GetRank(limit int) ([]models.Crypto, error) {
 
 		symbol := coin.Name
 		Cryptos = append(Cryptos, models.Crypto{
-			Rank:   key + 1,
+			Rank:   (page * limit) + key + 1,
 			Symbol: symbol,
 		})
 	}

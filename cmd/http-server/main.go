@@ -8,7 +8,7 @@ import (
 	"github.com/StepanchukYI/top-coin/internal/app"
 	"github.com/StepanchukYI/top-coin/internal/config"
 	"github.com/StepanchukYI/top-coin/internal/provider"
-	server "github.com/StepanchukYI/top-coin/internal/server/grpc"
+	server "github.com/StepanchukYI/top-coin/internal/server/http"
 	"github.com/StepanchukYI/top-coin/internal/services"
 )
 
