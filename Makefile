@@ -7,7 +7,7 @@ ifeq "$(V)" "1"
 endif
 
 default: build
-.PHONY: default clean test lint
+.PHONY: default test lint
 
 PROG=server
 PROG_SRC=cmd/http-server/main.go
@@ -22,9 +22,9 @@ ${PROG}: ${PROG_SRC}
 	$(VERBOSE) go build ${PROG_BUILD_FLAGS} -o $@ $^
 
 clean:
-	rm ${PROG}
+	rm -r ${PROG}
 
-build: clean ${PROG}
+build: ${PROG}
 
 test:
 	$(VERBOSE) echo "-> running tests ..."
